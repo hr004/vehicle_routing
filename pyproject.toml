@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "vehicle-routing"
+version = "0.1.0"
+description = ""
+authors = ["Hafiz <hafiz.buetipe@gmail.com>"]
+readme = "README.md"
+packages = [{include = "vehicle_routing"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+cpmpy = "^0.9.16"
+gurobipy = "^10.0.3"
+plotly = "^5.17.0"
+geopy = "^2.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
