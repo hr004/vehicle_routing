@@ -59,7 +59,7 @@ def generate_instance_dataset(n_instances, n_locations, n_vehicle):
 
 # Generate a training and a testing dataset
 train_dataset_models, train_dataset_variables, train_dataset_coordinates = generate_instance_dataset(
-   n_instances=3,
+   n_instances=30,
    n_locations=10,
    n_vehicle=3
 )

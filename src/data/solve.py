@@ -57,4 +57,5 @@ data = []
 for pars in random.sample(param_grid, initial_samples):
     rt = get_time_dataset(train_dataset_models, pars, train_dataset_variables, train_dataset_coordinates)
     data += [ list(pars.values()) + [ rt ] ]
-data
+
+print(data)
