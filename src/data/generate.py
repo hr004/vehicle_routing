@@ -61,23 +61,21 @@ def generate_instance_dataset(n_instances, n_locations, n_vehicle):
     return dataset_models, dataset_variables, dataset_coordinates
 
 
-# Generate a training and a testing dataset
-(
-    train_dataset_models,
-    train_dataset_variables,
-    train_dataset_coordinates,
-) = generate_instance_dataset(n_instances=30, n_locations=10, n_vehicle=3)
-(
-    test_dataset_models,
-    test_dataset_variables,
-    test_dataset_coordinates,
-) = generate_instance_dataset(n_instances=3, n_locations=10, n_vehicle=3)
 
-
-def get_train_test_data(n_train_instances = 3, n_locations = 10, n_vehicle = 3):
+def get_train_test_data(n_train_instances = 3, n_locations = 10, n_vehicles = 3):
     """
       test instances is half of train instances
     """
     n_test_instances = n_test_instances // 2
 
-    
+    # Generate a training and a testing dataset
+    (
+        train_dataset_models,
+        train_dataset_variables,
+        train_dataset_coordinates,
+    ) = generate_instance_dataset(n_instances=n_train_instances, n_locations=n_locations, n_vehicle=n_vehicles)
+    (
+        test_dataset_models,
+        test_dataset_variables,
+        test_dataset_coordinates,
+    ) = generate_instance_dataset(n_instances=n_test_instances, n_locations=n_locations, n_vehicle=n_vehicles)
