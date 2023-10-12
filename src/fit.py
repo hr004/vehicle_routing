@@ -1,9 +1,13 @@
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
 import random
-from src.data.params import param_grid
+from src.data.params import param_grid, params
 from src.data.solve import get_time_dataset
-import pickle
+import pandas as pd
+import os
+import datetime
+random.seed(1)
+np.random.seed(1)
 
 # not safe, we have to save all train model, variables and coordinates
 # data = pickle.load(open("initial_data.pkl", "rb"))
@@ -59,16 +63,20 @@ def find_best_configuration(data, regr, evals, exploration_probability, train_da
     # the search has completed, so retrieve the configuration that has recorded
     # the lowest runtime in the dataset we have collected
     i = np.array(data)[:, -1].argmin()
-    print("Best runtime ({}) for parameters {}.".format(data[i][-1], data[i][0:-1]))
+    # print("Best runtime ({}) for parameters {}.".format(data[i][-1], data[i][0:-1]))
 
     # test that best configuration on the test dataset of VRP instances
     rt_test = get_time_dataset(
         test_dataset_models, param_grid[i], test_dataset_variables, test_dataset_coordinates
     )
-    print("Test performance: {}".format((rt_test)))
+    # print("Test performance: {}".format((rt_test)))
+
+    # best runtime, best parameters, test performance
+    return data[i][-1], data[i][0:-1], rt_test
 
 
-def main():
+def main(n_train_instances, filename):
+    print(f"Starting training: n_instances {n_train_instances}")
     evals = 10
 
     regr = RandomForestRegressor(random_state=1)
@@ -76,20 +84,20 @@ def main():
     exploration_probability = 0.3
 
     (
-    train_dataset_coordinates,
     train_dataset_models,
     train_dataset_variables,
-    test_dataset_coordinates,
+    train_dataset_coordinates,
     test_dataset_models,
     test_dataset_variables,
-    ) = get_train_test_data(n_train_instances=3)
+    test_dataset_coordinates
+    ) = get_train_test_data(n_train_instances=n_train_instances)
 
     data = get_data(
         train_dataset_models=train_dataset_models,
         train_dataset_variables=train_dataset_variables, 
         train_dataset_coordinates=train_dataset_coordinates)
 
-    find_best_configuration(
+    best_runtime, best_params, test_runtime = find_best_configuration(
         data = data,
         regr=regr,
         evals=evals,
@@ -102,5 +110,33 @@ def main():
         test_dataset_coordinates=test_dataset_coordinates
     )
 
+
+    # the next line runs the solver with its default parameters and returns the average
+    # runtime on the test set; compare this value to rt_test above to see if the
+    # configuration you have found is better than the default solver setting
+    rt_test_notuning = get_time_dataset(test_dataset_models, None, test_dataset_variables, test_dataset_coordinates)
+    print(rt_test_notuning)
+
+    performance = {
+            "n_instances": n_train_instances,
+            "best_train_runtime": best_runtime,
+            "predicted_test_runtime": test_runtime,
+            "default_test_runtime": rt_test_notuning
+        }
+
+    for param, value in zip(list(params.keys()), best_params):
+        performance[f"param_{param}"] = value
+    
+    performance_df = pd.DataFrame.from_dict(
+        [performance]
+    )
+    
+    performance_df.to_csv(filename, mode="a", index=False, header = not os.path.exists(filename))
+
 if __name__ =="__main__":
-    main()
+    import pathlib
+    for n_instances in range(3,50, 1):
+      
+      filedir = f"./artifacts/n_instances"
+      pathlib.Path(filedir).mkdir(exist_ok=True, parents=True)
+      main(n_train_instances=n_instances, filename=f"{filedir}/run.csv")

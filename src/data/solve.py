@@ -1,13 +1,7 @@
 from cpmpy.solvers import CPM_gurobi, param_combinations
 import random
 from src.data.utils import decode_x, visualize_map_routes
-from src.data.generate import (
-    train_dataset_models,
-    train_dataset_variables,
-    train_dataset_coordinates,
-)
 
-random.seed(1)
 
 
 # This function runs the solver on a single model (instance) and returns the
@@ -72,5 +66,5 @@ def get_data(train_dataset_models, train_dataset_variables, train_dataset_coordi
         )
         data += [list(pars.values()) + [rt]]
 
-    print(data)
+    print(f"dataset length {len(data)}")
     return data
