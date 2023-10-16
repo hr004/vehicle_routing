@@ -7,8 +7,11 @@ import pandas as pd
 import os
 random.seed(1)
 np.random.seed(1)
-import pickle
-import pathlib
+
+# not safe, we have to save all train model, variables and coordinates
+# data = pickle.load(open("initial_data.pkl", "rb"))
+
+
 
 from src.data.solve import get_data  # noqa: E402
 
@@ -70,8 +73,10 @@ def find_best_configuration(data, regr, evals, exploration_probability, train_da
     # best runtime, best parameters, test performance
     return data[i][-1], data[i][0:-1], rt_test
 
-def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = None, exp_name = None, evals = 10, initial_samples  = 50):
-    print(f"Starting training")
+
+def main(n_train_instances, filename):
+    print(f"Starting training: n_instances {n_train_instances}")
+    evals = 10
 
     regr = RandomForestRegressor(random_state=1)
 
@@ -84,25 +89,13 @@ def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = N
     test_dataset_models,
     test_dataset_variables,
     test_dataset_coordinates
-    ) = get_train_test_data(n_train_instances=n_train_instances, n_test_instances=n_test_instances, n_locations=n_locations, n_vehicles=n_vehicles)
-
-
-    d = {
-        "train_dataset_models": train_dataset_models,
-        "train_dataset_variables": train_dataset_variables,
-        "train_dataset_coordinates": train_dataset_coordinates,
-        "test_dataset_models": test_dataset_models,
-        "test_dataset_variables": test_dataset_variables,
-        "test_dataset_coordinates": test_dataset_coordinates
-    }
+    ) = get_train_test_data(n_train_instances=n_train_instances)
 
     data = get_data(
         train_dataset_models=train_dataset_models,
         train_dataset_variables=train_dataset_variables, 
-        train_dataset_coordinates=train_dataset_coordinates,
-        initial_samples=initial_samples)
+        train_dataset_coordinates=train_dataset_coordinates)
 
-    average_training_runtime = np.array(data)[:,-1].mean()
     best_runtime, best_params, test_runtime = find_best_configuration(
         data = data,
         regr=regr,
@@ -121,18 +114,13 @@ def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = N
     # runtime on the test set; compare this value to rt_test above to see if the
     # configuration you have found is better than the default solver setting
     rt_test_notuning = get_time_dataset(test_dataset_models, None, test_dataset_variables, test_dataset_coordinates)
-
     print(rt_test_notuning)
 
     performance = {
-            "n_train_instances": n_train_instances,
-            "n_test_instances": n_test_instances,
-            "n_vehicles": n_vehicles,
-            "n_locations": n_locations,
-            "average_training_runtime": average_training_runtime,
+            "n_instances": n_train_instances,
             "best_train_runtime": best_runtime,
-            "predicted_runtime": test_runtime,
-            "solver_default_runtime": rt_test_notuning
+            "predicted_test_runtime": test_runtime,
+            "default_test_runtime": rt_test_notuning
         }
 
     for param, value in zip(list(params.keys()), best_params):
@@ -142,13 +130,11 @@ def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = N
         [performance]
     )
     
-    filedir = f"./artifacts/{exp_name}"
-    pathlib.Path(filedir).mkdir(exist_ok=True, parents=True)
-    filename = f"{filedir}/runs_average.csv"
     performance_df.to_csv(filename, mode="a", index=False, header = not os.path.exists(filename))
-    pickle.dump(d, open(f"{filedir}/data_n_train_instances_{n_train_instances}_n_test_instances_{n_test_instances}_n_vehicles_{n_vehicles}_n_locations_{n_locations}.pkl", "wb"))
 
-# if __name__ =="__main__":
-#     import pathlib
-#     for n_instances in range(3,50, 1):
-#       main(n_train_instances=n_instances, exp_name = "n_")
+if __name__ =="__main__":
+    import pathlib
+    for n_instances in range(3,50, 1):
+        filedir = "./artifacts/n_instances"
+        pathlib.Path(filedir).mkdir(exist_ok=True, parents=True)
+        main(n_train_instances=n_instances, filename=f"{filedir}/runs_percentile.csv")
