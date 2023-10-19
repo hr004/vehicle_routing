@@ -1,0 +1,2 @@
+n_train_instances,n_test_instances,n_vehicles,n_locations,average_training_runtime,best_train_runtime,predicted_runtime,solver_default_runtime,param_MIPFocus,param_Heuristics,param_VarBranch,param_ImproveStartGap,param_PoolGap
+10,10,3,20,3.0786993899345396,0.9310193061828613,6.464541244506836,0.5109510898590088,2,0.0,3,0.2,0.3

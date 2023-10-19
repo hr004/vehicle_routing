@@ -5,6 +5,7 @@ from src.data.params import param_grid, params
 from src.data.solve import get_time_dataset
 import pandas as pd
 import os
+
 random.seed(1)
 np.random.seed(1)
 import pickle
@@ -15,7 +16,18 @@ from src.data.solve import get_data  # noqa: E402
 from src.data.generate import get_train_test_data  # noqa: E402
 
 
-def find_best_configuration(data, regr, evals, exploration_probability, train_dataset_models, train_dataset_variables, train_dataset_coordinates, test_dataset_models, test_dataset_variables, test_dataset_coordinates):
+def find_best_configuration(
+    data,
+    regr,
+    evals,
+    exploration_probability,
+    train_dataset_models,
+    train_dataset_variables,
+    train_dataset_coordinates,
+    test_dataset_models,
+    test_dataset_variables,
+    test_dataset_coordinates,
+):
     best_config = -1
     for eval in range(0, evals):
         # first, we fit the regression model to the current dataset;
@@ -62,30 +74,51 @@ def find_best_configuration(data, regr, evals, exploration_probability, train_da
     # print("Best runtime ({}) for parameters {}.".format(data[i][-1], data[i][0:-1]))
 
     # test that best configuration on the test dataset of VRP instances
+    best_parameters = {}
+    for key, val in zip(list(params.keys()), data[i][0:-1]):
+        best_parameters[key] = val
     rt_test = get_time_dataset(
-        test_dataset_models, param_grid[i], test_dataset_variables, test_dataset_coordinates
+        test_dataset_models,
+        best_parameters,
+        test_dataset_variables,
+        test_dataset_coordinates,
     )
     # print("Test performance: {}".format((rt_test)))
 
     # best runtime, best parameters, test performance
     return data[i][-1], data[i][0:-1], rt_test
 
-def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = None, exp_name = None, evals = 10, initial_samples  = 50):
+
+def main(
+    n_train_instances,
+    n_test_instances,
+    n_locations=None,
+    n_vehicles=None,
+    exp_name=None,
+    evals=10,
+    initial_samples=50,
+    regr= None
+):
     print(f"Starting training")
 
-    regr = RandomForestRegressor(random_state=1)
+    if regr is None:
+        regr = RandomForestRegressor(random_state=1)
 
     exploration_probability = 0.3
 
     (
-    train_dataset_models,
-    train_dataset_variables,
-    train_dataset_coordinates,
-    test_dataset_models,
-    test_dataset_variables,
-    test_dataset_coordinates
-    ) = get_train_test_data(n_train_instances=n_train_instances, n_test_instances=n_test_instances, n_locations=n_locations, n_vehicles=n_vehicles)
-
+        train_dataset_models,
+        train_dataset_variables,
+        train_dataset_coordinates,
+        test_dataset_models,
+        test_dataset_variables,
+        test_dataset_coordinates,
+    ) = get_train_test_data(
+        n_train_instances=n_train_instances,
+        n_test_instances=n_test_instances,
+        n_locations=n_locations,
+        n_vehicles=n_vehicles,
+    )
 
     d = {
         "train_dataset_models": train_dataset_models,
@@ -93,18 +126,19 @@ def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = N
         "train_dataset_coordinates": train_dataset_coordinates,
         "test_dataset_models": test_dataset_models,
         "test_dataset_variables": test_dataset_variables,
-        "test_dataset_coordinates": test_dataset_coordinates
+        "test_dataset_coordinates": test_dataset_coordinates,
     }
 
     data = get_data(
         train_dataset_models=train_dataset_models,
-        train_dataset_variables=train_dataset_variables, 
+        train_dataset_variables=train_dataset_variables,
         train_dataset_coordinates=train_dataset_coordinates,
-        initial_samples=initial_samples)
+        initial_samples=initial_samples,
+    )
 
-    average_training_runtime = np.array(data)[:,-1].mean()
+    average_training_runtime = np.array(data)[:, -1].mean()
     best_runtime, best_params, test_runtime = find_best_configuration(
-        data = data,
+        data=data,
         regr=regr,
         evals=evals,
         exploration_probability=exploration_probability,
@@ -113,40 +147,48 @@ def main(n_train_instances, n_test_instances, n_locations = None, n_vehicles = N
         train_dataset_coordinates=train_dataset_coordinates,
         test_dataset_models=test_dataset_models,
         test_dataset_variables=test_dataset_variables,
-        test_dataset_coordinates=test_dataset_coordinates
+        test_dataset_coordinates=test_dataset_coordinates,
     )
-
 
     # the next line runs the solver with its default parameters and returns the average
     # runtime on the test set; compare this value to rt_test above to see if the
     # configuration you have found is better than the default solver setting
-    rt_test_notuning = get_time_dataset(test_dataset_models, None, test_dataset_variables, test_dataset_coordinates)
+    rt_test_notuning = get_time_dataset(
+        test_dataset_models, None, test_dataset_variables, test_dataset_coordinates
+    )
 
     print(rt_test_notuning)
 
     performance = {
-            "n_train_instances": n_train_instances,
-            "n_test_instances": n_test_instances,
-            "n_vehicles": n_vehicles,
-            "n_locations": n_locations,
-            "average_training_runtime": average_training_runtime,
-            "best_train_runtime": best_runtime,
-            "predicted_runtime": test_runtime,
-            "solver_default_runtime": rt_test_notuning
-        }
+        "n_train_instances": n_train_instances,
+        "n_test_instances": n_test_instances,
+        "n_vehicles": n_vehicles,
+        "n_locations": n_locations,
+        "average_training_runtime": average_training_runtime,
+        "best_train_runtime": best_runtime,
+        "predicted_runtime": test_runtime,
+        "solver_default_runtime": rt_test_notuning,
+    }
 
     for param, value in zip(list(params.keys()), best_params):
         performance[f"param_{param}"] = value
-    
-    performance_df = pd.DataFrame.from_dict(
-        [performance]
-    )
-    
-    filedir = f"./artifacts/{exp_name}"
+
+    performance_df = pd.DataFrame.from_dict([performance])
+
+    filedir = f"./artifacts_new/{exp_name}"
     pathlib.Path(filedir).mkdir(exist_ok=True, parents=True)
     filename = f"{filedir}/runs_average.csv"
-    performance_df.to_csv(filename, mode="a", index=False, header = not os.path.exists(filename))
-    pickle.dump(d, open(f"{filedir}/data_n_train_instances_{n_train_instances}_n_test_instances_{n_test_instances}_n_vehicles_{n_vehicles}_n_locations_{n_locations}.pkl", "wb"))
+    performance_df.to_csv(
+        filename, mode="a", index=False, header=not os.path.exists(filename)
+    )
+    pickle.dump(
+        d,
+        open(
+            f"{filedir}/data_n_train_instances_{n_train_instances}_n_test_instances_{n_test_instances}_n_vehicles_{n_vehicles}_n_locations_{n_locations}.pkl",
+            "wb",
+        ),
+    )
+
 
 # if __name__ =="__main__":
 #     import pathlib
