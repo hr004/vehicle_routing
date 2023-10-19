@@ -120,7 +120,7 @@ def main(
         n_vehicles=n_vehicles,
     )
 
-    d = {
+    to_save = {
         "train_dataset_models": train_dataset_models,
         "train_dataset_variables": train_dataset_variables,
         "train_dataset_coordinates": train_dataset_coordinates,
@@ -182,15 +182,9 @@ def main(
         filename, mode="a", index=False, header=not os.path.exists(filename)
     )
     pickle.dump(
-        d,
+        to_save,
         open(
             f"{filedir}/data_n_train_instances_{n_train_instances}_n_test_instances_{n_test_instances}_n_vehicles_{n_vehicles}_n_locations_{n_locations}.pkl",
             "wb",
         ),
     )
-
-
-# if __name__ =="__main__":
-#     import pathlib
-#     for n_instances in range(3,50, 1):
-#       main(n_train_instances=n_instances, exp_name = "n_")
