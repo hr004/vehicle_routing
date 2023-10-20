@@ -13,3 +13,4 @@ params = {
 }
 
 param_grid = [pars for pars in param_combinations(params)]
+print(f"Number of available configurations", len(param_grid))
