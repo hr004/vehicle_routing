@@ -175,7 +175,7 @@ def main(
 
     performance_df = pd.DataFrame.from_dict([performance])
 
-    filedir = f"./artifacts_new/{exp_name}"
+    filedir = f"./artifacts/{exp_name}"
     pathlib.Path(filedir).mkdir(exist_ok=True, parents=True)
     filename = f"{filedir}/runs_average.csv"
     performance_df.to_csv(

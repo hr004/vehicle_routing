@@ -1,0 +1,3 @@
+n_train_instances,n_test_instances,n_vehicles,n_locations,average_training_runtime,best_train_runtime,predicted_runtime,solver_default_runtime,param_MIPFocus,param_Heuristics,param_VarBranch
+10,10,3,20,0.7931570727825163,0.16533522605895995,0.2363924503326416,0.4329519271850586,0,0.0,1
+10,10,3,21,1.1548786078294118,0.20010900497436523,0.22692358493804932,0.3126340389251709,1,0.0,1
